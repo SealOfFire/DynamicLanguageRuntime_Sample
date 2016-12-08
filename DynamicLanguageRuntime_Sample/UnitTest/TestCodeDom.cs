@@ -1,4 +1,6 @@
-﻿using Microsoft.CSharp;
+﻿using IronPython.Hosting;
+using Microsoft.CSharp;
+using Microsoft.Scripting.Hosting;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
 using System;
 using System.CodeDom;
@@ -10,6 +12,76 @@ namespace UnitTest
     [TestClass]
     public class TestCodeDom
     {
+        [TestMethod]
+        public CodeMemberMethod test1()
+        {
+            ScriptEngine engine = Python.CreateEngine();
+            ScriptScope scope = engine.CreateScope();
+            CodeMemberMethod method = new CodeMemberMethod();
+            method.Name = "GetNextQuestion";
+            method.ReturnType = new CodeTypeReference("System.String");
+            // CodeCommentStatement comment = new CodeCommentStatement("注释");
+            // method.Comments.Add(comment);
+
+            method.Parameters.Add(new CodeParameterDeclarationExpression("System.String", "text"));
+
+            CodeVariableReferenceExpression variableRef1 = new CodeVariableReferenceExpression("context");
+            CodeMethodInvokeExpression cs1 = new CodeMethodInvokeExpression(new CodeSnippetExpression("context"), "GetQuestionByID", new CodePrimitiveExpression("Hello World!"));
+            method.Statements.Add(cs1);
+
+            CodeMethodReferenceExpression methodRef1 = new CodeMethodReferenceExpression(
+                new CodeThisReferenceExpression(),
+                "GetQuestionByID", new CodeTypeReference[] {
+                    new CodeTypeReference("System.Decimal"),
+                    new CodeTypeReference("System.Int32")});
+            method.Statements.Add(methodRef1);
+
+            // TODO python 下 return 功能不能实现
+            method.Statements.Add(new CodeMethodReturnStatement(new CodeArgumentReferenceExpression("text")));
+
+            CodeSnippetExpression literalExpression = new CodeSnippetExpression("return text");
+            method.Statements.Add(literalExpression);
+
+            ScriptSource source = engine.CreateScriptSource(method);
+            Console.WriteLine(source.GetCode());
+
+            // 执行代码
+            dynamic actual = source.Execute(scope);
+            Func<string, string> fun;
+            scope.TryGetVariable("GetNextQuestion", out fun);
+            string result = fun("aaa");
+           
+            return method;
+        }
+
+        [TestMethod]
+        public CodeCompileUnit test2()
+        {
+            CodeCompileUnit compileUnit = new CodeCompileUnit();
+            CodeNamespace samples = new CodeNamespace("Samples");
+            samples.Imports.Add(new CodeNamespaceImport("System"));
+            compileUnit.Namespaces.Add(samples);
+            CodeTypeDeclaration class1 = new CodeTypeDeclaration("Class1");
+            samples.Types.Add(class1);
+
+            CodeEntryPointMethod start = new CodeEntryPointMethod();
+            CodeMethodInvokeExpression cs1 = new CodeMethodInvokeExpression(new CodeTypeReferenceExpression("System.Console"), "WriteLine", new CodePrimitiveExpression("Hello World!"));
+            // cs1.Parameters.Add(Class2.test1());
+            CodeIndexerExpression a = new CodeIndexerExpression();
+
+            start.Statements.Add(cs1);
+            class1.Members.Add(start);
+            class1.Members.Add(this.test1());
+
+            return compileUnit;
+        }
+
+        [TestMethod]
+        public void test3()
+        {
+            this.GenerateCSharpCode(this.test2());
+        }
+
         public CodeCompileUnit test()
         {
             CodeCompileUnit compileUnit = new CodeCompileUnit();

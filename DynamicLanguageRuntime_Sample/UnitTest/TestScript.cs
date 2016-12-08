@@ -112,5 +112,23 @@ cla.add(1,2)
             dynamic result2 = source2.Execute(scope);
         }
 
+        /// <summary>
+        /// python 脚本调用.net对象方法
+        /// </summary>
+        [TestMethod]
+        public void TestMethod7()
+        {
+            // 创建引擎
+            ScriptEngine engine = Python.CreateEngine();
+            // 创建命名空间
+            ScriptScope scope = engine.CreateScope();
+
+            // 创建代码
+            ScriptSource source1 = engine.CreateScriptSourceFromString("def a():");
+            // 执行代码
+            source1.Compile();
+
+        }
+
     }
 }
