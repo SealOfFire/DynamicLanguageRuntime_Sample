@@ -5,7 +5,9 @@ using Microsoft.Scripting.Hosting.Providers;
 using Microsoft.Scripting.Runtime;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
 using System;
+using System.IO;
 using System.Linq.Expressions;
+using System.Runtime.Serialization.Formatters.Binary;
 
 namespace UnitTest
 {
@@ -30,6 +32,9 @@ namespace UnitTest
             CompilerContext compilerContext = new CompilerContext(sourceUnit, new IronPython.Compiler.PythonCompilerOptions(), ErrorSink.Null);
             IronPython.Compiler.Parser parser = IronPython.Compiler.Parser.CreateParser(compilerContext, new IronPython.PythonOptions());
             IronPython.Compiler.Ast.PythonAst ast1 = parser.ParseFile(true); // 表达式树
+
+            //Expression<Action> le = Expression.Lambda<Action>(ast1);
+            //Action act = le.Compile();
         }
 
         /// <summary>
@@ -71,6 +76,9 @@ namespace UnitTest
             );
 
             // Compile and execute an expression tree.
+            Expression<Func<int, int>> le = Expression.Lambda<Func<int, int>>(block, value);
+            Func<int, int> fun = le.Compile();
+            int a = fun(5);
             int factorial = Expression.Lambda<Func<int, int>>(block, value).Compile()(5);
             Console.WriteLine(factorial);
         }
@@ -94,6 +102,18 @@ namespace UnitTest
 
             // Compile the lambda expression.
             Func<double> compiledExpression = le.Compile();
+
+            //// 其他信息: 无法序列化以下委托: 非托管函数指针的委托、动态方法的委托或位于委托创建者程序集之外的方法的委托。
+            //// 序列化测试
+            //BinaryFormatter b = new BinaryFormatter();
+            //FileStream fileStream1 = new FileStream(@"d:\temp.dat", FileMode.Create);
+            //b.Serialize(fileStream1, compiledExpression);
+            //fileStream1.Close();
+            //// 反序列化
+            //Func<double> fun;
+            //FileStream fileStream2 = new FileStream(@"d:\temp.dat", FileMode.Open, FileAccess.Read, FileShare.Read);
+            //fun = b.Deserialize(fileStream2) as Func<double>;
+            //fileStream2.Close();
 
             // Execute the lambda expression.
             double result = compiledExpression();
